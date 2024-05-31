@@ -11,8 +11,8 @@
     <modules>
         <module>realtime-common</module>
         <module>realtime-dim</module>
-        <module>realtime-dwd</module>
         <module>realtime-dws</module>
+        <module>realtime-dwd-base-log</module>
     </modules>
 
     <properties>

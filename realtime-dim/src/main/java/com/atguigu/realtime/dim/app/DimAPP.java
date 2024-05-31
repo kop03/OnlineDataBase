@@ -8,6 +8,7 @@ import com.atguigu.gmall.realtime.common.util.FlinkSourceUtil;
 import com.atguigu.gmall.realtime.common.util.HbaseUtil;
 import com.atguigu.gmall.realtime.common.util.JdbcUtil;
 import com.atguigu.realtime.dim.function.DimBroadcastFunction;
+import com.atguigu.realtime.dim.function.DimHbaseSinkFunction;
 import com.ververica.cdc.connectors.mysql.source.MySqlSource;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -24,6 +25,7 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.hbase.client.Connection;
 
@@ -42,13 +44,8 @@ public class DimAPP extends BaseAPP {
         // 1.对ods读取的原始数据进行数据清洗  json格式的数据输出一般都是json对象
         SingleOutputStreamOperator<JSONObject> jsonObjectSteam = etl(stream);
 
-
-
         // 2.使用flinkcdc读取监控配置表数据
         MySqlSource<String> mysqlSource = FlinkSourceUtil.getMysqlSource(Constant.PROCESS_DATABASE, Constant.PROCESS_DIM_TABLE_NAME);
-
-
-
 
         // 3.读取数据
         DataStreamSource<String> MysqlSource = env.fromSource(
@@ -58,39 +55,34 @@ public class DimAPP extends BaseAPP {
         ).setParallelism(1);
 //        MysqlSource.print();
 
-
-
-
         // 3.在hbase中创建维度表  涉及到远程连接都要使用富函数 来保证生命周期
         // flinkcdc 监控的数据类型也是json对象
         SingleOutputStreamOperator<TableProcessDim> createTableStream = createHbaseTable(MysqlSource).setParallelism(1);
 //        createTableStream.print();
-
-
-
 
         // 4.做成广播流
         // 广播状态的key用于判断是否是维度表 value用于补充信息写出到hbase
         MapStateDescriptor<String, TableProcessDim> broadcastState = new MapStateDescriptor<>("broadcast_state", String.class, TableProcessDim.class);
         BroadcastStream<TableProcessDim> broadcastStateStream = createTableStream.broadcast(broadcastState);
 
-
-
-
         // 5.连接主流和广播流
         SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> dimStream = connectionStream(jsonObjectSteam, broadcastState, broadcastStateStream);
-        dimStream.print();
+//        dimStream.print();
 
 
         // 6.筛选出需要写出的字段
         SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> filterColumnStream = filterColumn(dimStream);
+//        filterColumnStream.print();
+
 
 
         // 7.写出到hbase
+        filterColumnStream.addSink(new DimHbaseSinkFunction());
+
     }
 
     public SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> filterColumn (SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> dimStream) {
-        SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> filterColumnStream = dimStream.map(new MapFunction<Tuple2<JSONObject, TableProcessDim>, Tuple2<JSONObject, TableProcessDim>>() {
+        return dimStream.map(new MapFunction<Tuple2<JSONObject, TableProcessDim>, Tuple2<JSONObject, TableProcessDim>>() {
             @Override
             public Tuple2<JSONObject, TableProcessDim> map(Tuple2<JSONObject, TableProcessDim> value) throws Exception {
                 JSONObject jsonObj = value.f0;
@@ -99,10 +91,11 @@ public class DimAPP extends BaseAPP {
                 List<String> columns = Arrays.asList(sinkColumns.split(","));
                 JSONObject data = jsonObj.getJSONObject("data");
                 data.keySet().removeIf(key -> !columns.contains(key));
+
+                System.out.println("sinkTable: "+dim.getSinkTable());
                 return value;
             }
         });
-        return filterColumnStream;
     }
 
     public SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDim>> connectionStream(SingleOutputStreamOperator<JSONObject> jsonObjectSteam, MapStateDescriptor<String, TableProcessDim> broadcastState, BroadcastStream<TableProcessDim> broadcastStateStream) {

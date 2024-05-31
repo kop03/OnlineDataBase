@@ -1,22 +1,23 @@
 package com.atguigu.gmall.realtime.common.constant;
 
 public class Constant {
-    public static final String KAFKA_BROKERS = "hadoop101:9092,hadoop102:9092,hadoop103:9092";
+    public static final String KAFKA_BROKERS = "hadoop102:9092,hadoop103:9092,hadoop104:9092";
 
     public static final String TOPIC_DB = "topic_db";
     public static final String TOPIC_LOG = "topic_log";
 
-    public static final String MYSQL_HOST = "hadoop101";
+    public static final String MYSQL_HOST = "hadoop102";
     public static final int MYSQL_PORT = 3306;
     public static final String MYSQL_USER_NAME = "root";
     public static final String MYSQL_PASSWORD = "000000";
     public static final String PROCESS_DATABASE = "gmall2023_config";
     public static final String PROCESS_DIM_TABLE_NAME = "table_process_dim";
-    public static final String HBASE_ZOOKEEPER_QUORUM = "hadoop101,hadoop102,hadoop103";
+    public static final String PROCESS_DWD_TABLE_NAME = "table_process_dwd";
+    public static final String HBASE_ZOOKEEPER_QUORUM = "hadoop102,hadoop103,hadoop104";
     public static final String HBASE_NAMESPACE = "gmall";
 
     public static final String MYSQL_DRIVER = "com.mysql.cj.jdbc.Driver";
-    public static final String MYSQL_URL = "jdbc:mysql://hadoop101:3306?useSSL=false";
+    public static final String MYSQL_URL = "jdbc:mysql://hadoop102:3306?useSSL=false";
 
     public static final String TOPIC_DWD_TRAFFIC_START = "dwd_traffic_start";
     public static final String TOPIC_DWD_TRAFFIC_ERR = "dwd_traffic_err";

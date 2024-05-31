@@ -32,12 +32,12 @@ public class DimBroadcastFunction extends BroadcastProcessFunction<JSONObject, T
         hashMap=new HashMap<>();
         for (TableProcessDim tableProcessDim : tableProcessDims) {
             tableProcessDim.setOp("r");
-            hashMap.put(tableProcessDim.getSourceTable(),tableProcessDim);
+            hashMap.put(tableProcessDim.getSinkTable(),tableProcessDim);
         }
         JdbcUtil.closeConnection(mysqlConnection);
 
     }
-
+    // 问题在这，因为没有初始化维表数据
     @Override
     public void processBroadcastElement(TableProcessDim value, Context ctx, Collector<Tuple2<JSONObject, TableProcessDim>> out) throws Exception {
         // 读取广播状态
@@ -60,7 +60,7 @@ public class DimBroadcastFunction extends BroadcastProcessFunction<JSONObject, T
         ReadOnlyBroadcastState<String, TableProcessDim> tableProcessState = ctx.getBroadcastState(broadcastState);
 
         // 查询广播状态 判断当前数据对应的表格是否存在于状态里面
-        String tableName = value.getString("table");
+        String tableName = "dim_"+value.getString("table");
         TableProcessDim tableProcessDim = tableProcessState.get(tableName);
 
         // 如果是数据到的太早 造成状态为空 主流的数据永远不会比open方法里的预加载要早
