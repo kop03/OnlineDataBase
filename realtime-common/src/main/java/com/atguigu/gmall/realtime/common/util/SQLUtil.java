@@ -49,4 +49,16 @@ public class SQLUtil {
                 "  'value.format' = 'json'\n" +
                 ")";
     }
+
+
+    public static String getDorisSinkSQL(String tableName){
+        return "WITH (\n" +
+                "      'connector' = 'doris',\n" +
+                "      'fenodes' = '" + Constant.FENODES + "',\n" +
+                "      'table.identifier' = '" + Constant.DORIS_DATABASE + "." + tableName + "',\n" +
+                "      'username' = '" + Constant.DORIS_USERNAME + "',\n" +
+                "      'password' = '',\n" +
+                "\t  'sink.label-prefix' = 'doris_label" + System.currentTimeMillis() + "'\n" +
+                ");";
+    }
 }

@@ -92,7 +92,9 @@ public class DwdTradeOrderDetail extends BaseSQLAPP {
                 "  activity_rule_id,\n" +
                 "  coupon_id,\n" +
                 "  sku_name,\n" +
+                "  order_price,\n" +
                 "  create_time,\n" +
+                "  sku_num,\n" +
                 "  split_total_amount,\n" +
                 "  split_activity_amount,\n" +
                 "  split_coupon_amount\n," +
@@ -118,7 +120,9 @@ public class DwdTradeOrderDetail extends BaseSQLAPP {
                 "  activity_rule_id STRING,\n" +
                 "  coupon_id STRING,\n" +
                 "  sku_name STRING,\n" +
+                "  order_price STRING,\n" +
                 "  create_time STRING,\n" +
+                "  sku_num STRING,\n" +
                 "  split_total_amount STRING,\n" +
                 "  split_activity_amount STRING,\n" +
                 "  split_coupon_amount STRING,\n" +
